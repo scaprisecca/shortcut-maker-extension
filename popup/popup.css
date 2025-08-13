@@ -17,6 +17,23 @@ body {
   background-color: #fff;
 }
 
+.empty-state-message {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+.warning-message {
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #fdf7e2;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  color: #664d03;
+  text-align: center;
+  font-size: 13px;
+}
+
 h1, h2 {
   margin: 0 0 8px 0;
   font-weight: 600;

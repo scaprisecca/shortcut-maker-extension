@@ -1,6 +1,7 @@
 // Content script for the Shortcut Maker extension
 
 import { getShortcutsForDomain } from '../storage/storage.js';
+import { normalizeKeyString } from '../utils/helpers.js';
 
 let activeShortcuts = new Map();
 
@@ -13,45 +14,33 @@ async function loadShortcuts() {
     const shortcuts = await getShortcutsForDomain(domain);
     activeShortcuts.clear();
     shortcuts.forEach(shortcut => {
-      // Normalize the key combo for consistent matching
-      const normalizedKeyCombo = normalizeKeyCombo(shortcut.keyCombo);
-      activeShortcuts.set(normalizedKeyCombo, shortcut);
+      // The keyCombo from storage is already normalized by the popup
+      activeShortcuts.set(normalizeKeyString(shortcut.keyCombo), shortcut);
     });
-    console.log(`Shortcut Maker: Loaded ${activeShortcuts.size} shortcuts for ${domain}`);
+    console.log(`Shortcut Maker: Loaded ${activeShortcuts.size} shortcuts for ${domain}.`);
   } catch (error) {
     console.error('Shortcut Maker: Error loading shortcuts', error);
   }
 }
 
 /**
- * Converts a KeyboardEvent into a normalized string representation.
- * e.g., 'Ctrl+Shift+K'
+ * Creates a consistent string representation from a keyboard event.
  * @param {KeyboardEvent} e The keyboard event.
- * @returns {string} A normalized string for the key combo.
+ * @returns {string} A normalized string for the key combination.
  */
-function keyEventToString(e) {
+function getKeyStringFromEvent(e) {
   const parts = [];
-  if (e.ctrlKey) parts.push('Ctrl');
-  if (e.altKey) parts.push('Alt');
-  if (e.shiftKey) parts.push('Shift');
-  if (e.metaKey) parts.push('Meta');
+  if (e.ctrlKey) parts.push('ctrl');
+  if (e.altKey) parts.push('alt');
+  if (e.shiftKey) parts.push('shift');
 
-  // Add the main key, ensuring it's not a modifier itself
   const key = e.key.toLowerCase();
   if (!['control', 'alt', 'shift', 'meta'].includes(key)) {
-      parts.push(e.key.toUpperCase());
+    parts.push(key);
   }
 
-  return parts.join('+');
-}
-
-/**
- * Normalizes a key combo string from storage to match the event string format.
- * @param {string} keyCombo The key combo string (e.g., 'ctrl+/').
- * @returns {string} The normalized key combo string (e.g., 'Ctrl+/').
- */
-function normalizeKeyCombo(keyCombo) {
-    return keyCombo.split('+').map(part => part.trim().charAt(0).toUpperCase() + part.trim().slice(1).toLowerCase()).join('+');
+  // The parts are sorted and joined by the imported normalizeKeyString function
+  return normalizeKeyString(parts.join('+'));
 }
 
 /**
@@ -59,20 +48,19 @@ function normalizeKeyCombo(keyCombo) {
  * @param {KeyboardEvent} e 
  */
 function handleKeyDown(e) {
-  // Don't trigger shortcuts if the user is typing in an input field, unless it's a textarea
-  const targetTagName = e.target.tagName.toLowerCase();
-  if ((targetTagName === 'input' && e.target.type !== 'checkbox' && e.target.type !== 'radio') || targetTagName === 'textarea' || e.target.isContentEditable) {
-      // Allow shortcuts in textareas, but be mindful of conflicts
-      if(targetTagName === 'textarea' && e.key !== 'Escape') {
-          // A specific check could be added here if needed
-      }
-      else if (targetTagName !== 'textarea'){
-          return;
-      }
+  // Don't trigger shortcuts if the user is typing in an input field, unless it's a textarea or content-editable element.
+  const target = e.target;
+  const isEditable = target.isContentEditable || 
+                     target.tagName.toLowerCase() === 'textarea' || 
+                     (target.tagName.toLowerCase() === 'input' && /text|password|email|search|tel|url/.test(target.type));
+
+  if (isEditable) {
+    // We might still want some shortcuts to work in editable fields, 
+    // but for now, we'll keep it simple and exit.
+    return;
   }
 
-  const keyString = keyEventToString(e);
-  const normalizedKeyString = normalizeKeyCombo(keyString);
+  const normalizedKeyString = getKeyStringFromEvent(e);
   const shortcut = activeShortcuts.get(normalizedKeyString);
 
   if (shortcut) {

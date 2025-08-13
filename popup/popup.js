@@ -1,17 +1,19 @@
 // JavaScript for the Shortcut Maker popup
 
 import { 
-  getShortcutsForDomain, 
   createShortcut, 
-  getShortcuts, 
+  getShortcutsForDomain, 
   updateShortcut, 
   deleteShortcut 
 } from '../storage/storage.js';
 import { isValidSelector } from '../selectors/selectors.js';
+import { PROTECTED_SHORTCUTS } from '../utils/constants.js';
+import { normalizeKeyString } from '../utils/helpers.js';
 
 // DOM Elements
 const shortcutList = document.getElementById('shortcut-list');
 const noShortcutsMessage = document.getElementById('no-shortcuts-message');
+const warningMessage = document.getElementById('warning-message');
 const currentDomainEl = document.getElementById('current-domain');
 
 /**
@@ -59,11 +61,22 @@ async function displayShortcuts() {
 
   shortcutList.innerHTML = ''; // Clear existing list
 
-  if (shortcuts.length > 0) {
-    shortcuts.forEach(renderShortcut);
-    noShortcutsMessage.classList.add('hidden');
+  if (shortcuts.length === 0) {
+    noShortcutsMessage.style.display = 'block';
+    shortcutList.style.display = 'none';
+    warningMessage.style.display = 'none';
   } else {
-    noShortcutsMessage.classList.remove('hidden');
+    noShortcutsMessage.style.display = 'none';
+    shortcutList.style.display = 'block';
+    shortcuts.forEach(renderShortcut);
+
+    // Handle warning message visibility
+    if (shortcuts.length > 15) {
+      warningMessage.textContent = `Warning: ${shortcuts.length} shortcuts are active on this site. A large number may impact performance.`;
+      warningMessage.style.display = 'block';
+    } else {
+      warningMessage.style.display = 'none';
+    }
   }
 }
 
@@ -92,12 +105,9 @@ function hideForm() {
   addShortcutBtn.classList.remove('hidden');
   shortcutForm.reset();
   shortcutIdInput.value = ''; // Clear the ID when hiding
+  selectorInput.classList.remove('invalid'); // Reset validation style
 }
 
-/**
- * Handles the form submission for creating a new shortcut.
- * @param {Event} e
- */
 /**
  * Validates the key combination to ensure it's not a duplicate for the current domain.
  * @param {string} keyCombo The key combo to validate.
@@ -108,50 +118,62 @@ async function isValidKeyCombo(keyCombo, currentId) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const domain = new URL(tab.url).hostname;
   const shortcuts = await getShortcutsForDomain(domain);
-  
-  return !shortcuts.some(shortcut => 
-    shortcut.keyCombo.toLowerCase() === keyCombo.toLowerCase() && shortcut.id !== currentId
+  const normalizedKey = normalizeKeyString(keyCombo);
+
+  return !shortcuts.some(
+    (shortcut) =>
+      normalizeKeyString(shortcut.keyCombo) === normalizedKey && shortcut.id !== currentId
   );
 }
 
+/**
+ * Handles the form submission for creating or updating a shortcut.
+ * @param {Event} e
+ */
 async function handleFormSubmit(e) {
   e.preventDefault();
 
   const shortcutId = shortcutIdInput.value;
-  const keyCombo = document.getElementById('keyCombo').value;
+  const keyCombo = document.getElementById('keyCombo').value.trim();
+  const selector = selectorInput.value.trim();
+  const description = document.getElementById('description').value.trim();
+  const action = document.getElementById('action').value;
 
-  if (!(await isValidKeyCombo(keyCombo, shortcutId))) {
-    alert('This key combination is already in use on this site. Please choose another.');
+  // --- Validation Flow ---
+  if (!keyCombo || !selector || !description) {
+    alert('Key Combination, Description, and CSS Selector are required.');
     return;
   }
 
-  const selector = selectorInput.value;
+  const normalizedKey = normalizeKeyString(keyCombo);
+  if (PROTECTED_SHORTCUTS.includes(normalizedKey)) {
+    alert(`'${keyCombo}' is a protected browser shortcut and cannot be used.`);
+    return;
+  }
+
+  if (!(await isValidKeyCombo(keyCombo, shortcutId))) {
+    alert('This key combination is already in use on this site.');
+    return;
+  }
+
   if (!isValidSelector(selector)) {
     alert('The CSS selector is not valid. Please correct it.');
     selectorInput.focus();
     return;
   }
 
-  const updates = {
-    description: document.getElementById('description').value,
-    keyCombo,
-    selector: document.getElementById('selector').value,
-    action: document.getElementById('action').value,
-  };
+  const shortcutData = { description, keyCombo, selector, action };
 
   if (shortcutId) {
-    // Editing an existing shortcut
-    await updateShortcut(shortcutId, updates);
+    await updateShortcut(shortcutId, shortcutData);
   } else {
-    // Creating a new shortcut
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const domain = new URL(tab.url).hostname;
-    const newShortcutData = { ...updates, domain };
-    await createShortcut(newShortcutData);
+    await createShortcut({ ...shortcutData, domain });
   }
 
   hideForm();
-  await displayShortcuts(); // Refresh the list
+  await displayShortcuts();
 }
 
 // Initial load

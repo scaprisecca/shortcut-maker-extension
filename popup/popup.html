@@ -15,10 +15,13 @@
   <main>
     <div id="shortcut-list-container">
       <h2>Shortcuts for this site</h2>
-      <ul id="shortcut-list">
+      <div id="shortcut-list">
         <!-- Shortcuts will be dynamically inserted here -->
-      </ul>
-      <p id="no-shortcuts-message" class="hidden">No shortcuts defined for this site.</p>
+      </div>
+      <div id="no-shortcuts-message" class="empty-state-message" style="display: none;">
+        No shortcuts defined for this site yet.
+      </div>
+      <div id="warning-message" class="warning-message" style="display: none;"></div>
     </div>
 
     <button id="add-shortcut-btn">+ Add New Shortcut</button>
