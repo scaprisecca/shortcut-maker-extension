@@ -113,6 +113,18 @@ button {
   font-weight: 500;
 }
 
+input[type="text"]:focus, 
+textarea:focus {
+  border-color: #4d90fe;
+  outline: none;
+  box-shadow: 0 0 0 1px #4d90fe;
+}
+
+input.invalid {
+  border-color: #d93025; /* Google's error red */
+  box-shadow: 0 0 0 1px #d93025;
+}
+
 input[type="text"], select {
   width: 100%;
   padding: 8px;

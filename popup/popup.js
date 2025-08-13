@@ -1,6 +1,13 @@
 // JavaScript for the Shortcut Maker popup
 
-import { getShortcutsForDomain, createShortcut, getShortcuts, updateShortcut, deleteShortcut } from '../storage/storage.js';
+import { 
+  getShortcutsForDomain, 
+  createShortcut, 
+  getShortcuts, 
+  updateShortcut, 
+  deleteShortcut 
+} from '../storage/storage.js';
+import { isValidSelector } from '../selectors/selectors.js';
 
 // DOM Elements
 const shortcutList = document.getElementById('shortcut-list');
@@ -65,7 +72,8 @@ const addShortcutBtn = document.getElementById('add-shortcut-btn');
 const shortcutForm = document.getElementById('shortcut-form');
 const cancelBtn = document.getElementById('cancel-btn');
 const formTitle = document.getElementById('form-title');
-const shortcutIdInput = document.getElementById('shortcut-id');
+const shortcutIdInput = document.getElementById('shortcutId');
+const selectorInput = document.getElementById('selector');
 
 /**
  * Shows the form for adding or editing a shortcut.
@@ -117,6 +125,13 @@ async function handleFormSubmit(e) {
     return;
   }
 
+  const selector = selectorInput.value;
+  if (!isValidSelector(selector)) {
+    alert('The CSS selector is not valid. Please correct it.');
+    selectorInput.focus();
+    return;
+  }
+
   const updates = {
     description: document.getElementById('description').value,
     keyCombo,
@@ -165,6 +180,20 @@ async function handleEditClick(shortcutId) {
 addShortcutBtn.addEventListener('click', showForm);
 cancelBtn.addEventListener('click', hideForm);
 shortcutForm.addEventListener('submit', handleFormSubmit);
+
+/**
+ * Handles real-time validation of the CSS selector input field.
+ */
+function handleSelectorValidation() {
+  const selector = selectorInput.value;
+  if (selector && !isValidSelector(selector)) {
+    selectorInput.classList.add('invalid');
+  } else {
+    selectorInput.classList.remove('invalid');
+  }
+}
+
+selectorInput.addEventListener('input', handleSelectorValidation);
 
 /**
  * Handles clicks on the delete button, showing a confirmation before deleting.

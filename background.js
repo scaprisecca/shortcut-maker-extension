@@ -22,43 +22,63 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 /**
- * Updates the action badge with the number of shortcuts for a given tab.
- * @param {number} tabId The ID of the tab to update the badge for.
+ * Checks for shortcuts on a given tab and injects the content script if necessary.
+ * Also updates the action badge.
+ * @param {number} tabId The ID of the tab to process.
+ * @param {string} [tabUrl] The URL of the tab, if available.
  */
-async function updateActionBadge(tabId) {
-  const tab = await chrome.tabs.get(tabId);
-  if (tab.url && (tab.url.startsWith('http:') || tab.url.startsWith('https://'))) {
-    const url = new URL(tab.url);
-    const domain = url.hostname;
-    const shortcuts = await getShortcutsForDomain(domain);
-    const count = shortcuts.length > 0 ? shortcuts.length.toString() : '';
-    
-    chrome.action.setBadgeText({ text: count, tabId: tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#3498db' });
-  } else {
-    // Clear badge for non-web pages (e.g., chrome://extensions)
+async function processTab(tabId, tabUrl) {
+  if (!tabUrl || !(tabUrl.startsWith('http:') || tabUrl.startsWith('https://'))) {
     chrome.action.setBadgeText({ text: '', tabId: tabId });
+    return; // Ignore non-web pages
+  }
+
+  const domain = new URL(tabUrl).hostname;
+  const shortcuts = await getShortcutsForDomain(domain);
+  const count = shortcuts.length;
+
+  // Update badge
+  chrome.action.setBadgeText({ text: count > 0 ? count.toString() : '', tabId: tabId });
+  chrome.action.setBadgeBackgroundColor({ color: '#3498db' });
+
+  // Inject content script if shortcuts exist and it hasn't been injected yet
+  if (count > 0) {
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        files: ['content/content.js'],
+      });
+    } catch (e) {
+      // Avoids errors when the script is already injected, which can happen.
+      if (!e.message.includes('already been injected')) {
+        console.error(`Shortcut Maker: Failed to inject script: ${e.message}`);
+      }
+    }
   }
 }
 
-// Update badge when a tab is updated (e.g., new URL)
+// Process tab when it's updated
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.active) {
-    updateActionBadge(tabId);
+  if (changeInfo.status === 'complete' && tab.url) {
+    processTab(tabId, tab.url);
   }
 });
 
-// Update badge when the user switches to a different tab
-chrome.tabs.onActivated.addListener((activeInfo) => {
-  updateActionBadge(activeInfo.tabId);
+// Process tab when it becomes active
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  const tab = await chrome.tabs.get(activeInfo.tabId);
+  if (tab.url) {
+    processTab(activeInfo.tabId, tab.url);
+  }
 });
 
 // Update badge when shortcuts are changed in storage
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area === 'local' && changes.shortcuts) {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) {
-      updateActionBadge(tab.id);
+    if (tab && tab.url) {
+      // Re-process the tab to update the badge and inject script if needed
+      processTab(tab.id, tab.url);
     }
   }
 });
