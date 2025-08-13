@@ -1,7 +1,11 @@
 ---
-description: Used to process all tasks lists in the `build-plan/tasks/` folder
+trigger: manual
+---
+
+---
+description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # Task List Management
 
