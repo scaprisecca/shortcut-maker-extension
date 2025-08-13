@@ -155,3 +155,5 @@ export async function getShortcutsForDomain(domain) {
   const allShortcuts = await getShortcuts();
   return allShortcuts.filter(shortcut => shortcut.domain === domain);
 }
+
+export { createShortcut, getShortcuts, updateShortcut, deleteShortcut, getShortcutsForDomain };

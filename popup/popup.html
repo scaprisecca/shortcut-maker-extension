@@ -2,11 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shortcut Maker</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>Shortcut Maker</h1>
-  <script src="popup.js"></script>
+  <header>
+    <h1>Shortcut Maker</h1>
+    <p id="current-domain"></p>
+  </header>
+
+  <main>
+    <div id="shortcut-list-container">
+      <h2>Shortcuts for this site</h2>
+      <ul id="shortcut-list">
+        <!-- Shortcuts will be dynamically inserted here -->
+      </ul>
+      <p id="no-shortcuts-message" class="hidden">No shortcuts defined for this site.</p>
+    </div>
+
+    <button id="add-shortcut-btn">+ Add New Shortcut</button>
+
+    <form id="shortcut-form" class="hidden">
+      <h2 id="form-title">Add Shortcut</h2>
+      <input type="hidden" id="shortcut-id">
+      
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" id="description" placeholder="e.g., Focus search bar" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="keyCombo">Key Combo</label>
+        <input type="text" id="keyCombo" placeholder="e.g., Ctrl+/" required>
+      </div>
+
+      <div class="form-group">
+        <label for="selector">CSS Selector</label>
+        <input type="text" id="selector" placeholder="e.g., input[name='q']" required>
+      </div>
+
+      <div class="form-group">
+        <label for="action">Action</label>
+        <select id="action" required>
+          <option value="click">Click</option>
+          <option value="focus">Focus</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" id="save-btn">Save</button>
+        <button type="button" id="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="popup.js" type="module"></script>
 </body>
 </html>

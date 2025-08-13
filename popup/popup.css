@@ -1,4 +1,133 @@
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --danger-color: #e74c3c;
+  --light-gray-color: #f0f0f0;
+  --dark-gray-color: #333;
+  --border-radius: 4px;
+}
+
 body {
-  width: 320px;
-  font-family: sans-serif;
+  width: 380px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: var(--dark-gray-color);
+  margin: 0;
+  padding: 16px;
+  background-color: #fff;
+}
+
+h1, h2 {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 18px;
+}
+
+h2 {
+  font-size: 16px;
+  color: #555;
+}
+
+header p#current-domain {
+  font-weight: 500;
+  color: #777;
+  margin: 0 0 16px 0;
+  border-bottom: 1px solid var(--light-gray-color);
+  padding-bottom: 8px;
+}
+
+#shortcut-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#shortcut-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-radius: var(--border-radius);
+  margin-bottom: 8px;
+  background-color: var(--light-gray-color);
+}
+
+#shortcut-list .shortcut-info {
+  flex-grow: 1;
+}
+
+#shortcut-list .shortcut-info .description {
+  font-weight: 600;
+}
+
+#shortcut-list .shortcut-info .details {
+  font-size: 12px;
+  color: #666;
+}
+
+#shortcut-list .actions button {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+#add-shortcut-btn, #save-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+#add-shortcut-btn:hover, #save-btn:hover {
+  background-color: #2980b9;
+}
+
+#cancel-btn {
+  background-color: #ecf0f1;
+  color: var(--dark-gray-color);
+}
+
+#cancel-btn:hover {
+  background-color: #bdc3c7;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+input[type="text"], select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.hidden {
+  display: none;
 }
