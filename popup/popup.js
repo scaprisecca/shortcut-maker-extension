@@ -85,7 +85,7 @@ const addShortcutBtn = document.getElementById('add-shortcut-btn');
 const shortcutForm = document.getElementById('shortcut-form');
 const cancelBtn = document.getElementById('cancel-btn');
 const formTitle = document.getElementById('form-title');
-const shortcutIdInput = document.getElementById('shortcutId');
+const shortcutIdInput = document.getElementById('shortcut-id');
 const selectorInput = document.getElementById('selector');
 
 /**
